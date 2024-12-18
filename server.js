@@ -8,8 +8,12 @@ require('dotenv').config();
 const app = express();
 const PORT = 5002;
 
-app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(cors({
+    origin: 'https://www.suryaremit.com',
+    methods: ['POST'],
+    allowedHeaders: ['Content-Type'],
+}));
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
