@@ -2,6 +2,8 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+require('dotenv').config();
+
 
 const app = express();
 const PORT = 5002;
@@ -12,89 +14,144 @@ app.use(bodyParser.json());
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'sumitraj00736@gmail.com',
-    pass: 'njjxlkkfikunyvwq', 
+    user:process.env.USERID,
+    pass:process.env.PASSKEY, 
   },
 });
 
-// app.post('/send-email', (req, res) => {
-
-//   const { name, email, message } = req.body;
-
-//   const mailOptions = {
-//     from: email,
-//     to: 'gamersnepal00736@gmail.com', 
-//     subject: `Message from ${name}`,
-//     text: `You received a message from ${name} (${email}):\n\n${message}`,
-//   };
-
-//   transporter.sendMail(mailOptions, (error, info) => {
-//     if (error) {
-//       console.error('Error sending email:', error);
-//       res.status(500).json({ error: 'Failed to send email' });
-//     } else {
-//       console.log('Email sent:', info.response);
-//       res.status(200).json({ message: 'Email sent successfully!' });
-//     }
-//   });
-// });
-
-
 
 app.post('/send-email', (req, res) => {
-    const {
-      companyName,
-      companyAddress,
-      telephoneNo,
-      countryName,
-      district,
-      streetAddress,
-      city,
-      stateProvince,
-      postalZipCode,
-      message,
-    } = req.body;
-  
-    // Compose email body
-    const emailBody = `
-      You received a new message from the "Be Our Partner" form:
-  
-      Company/Pvt. Firm Name: ${companyName}
-      Company Address: ${companyAddress}
-      Telephone No: ${telephoneNo}
-      Country Name: ${countryName}
-      ${countryName === 'Nepal' ? `District: ${district}` : ''}
-      Street Address: ${streetAddress}
-      City: ${city}
-      State/Province: ${stateProvince}
-      Postal/Zip Code: ${postalZipCode}
-      
-      Message:
-      ${message}
-    `;
-  
-    // Mail options
-    const mailOptions = {
-      from: 'no-reply@yourdomain.com', // Replace with your preferred "from" email
-      to: 'gamersnepal00736@gmail.com', // Recipient email
-      subject: `New Partner Form Submission from ${companyName}`,
-      text: emailBody,
+  const formType = req.body.formType;
+  let emailBody = '';
+  let subject = '';
 
-    };
-  
-    // Send email
-    transporter.sendMail(mailOptions , (error, info) => {
+  switch (formType) {
+    case 'partner':
+      const {
+        companyName,
+        companyAddress,
+        telephoneNo,
+        countryName,
+        district,
+        streetAddress,
+        city,
+        stateProvince,
+        postalZipCode,
+        message,
+      } = req.body;
+
+      emailBody = `
+        You received a new message from the "Be Our Partner" form:
+
+        Company/Pvt. Firm Name: ${companyName}
+        Company Address: ${companyAddress}
+        Telephone No: ${telephoneNo}
+        Country Name: ${countryName}
+        ${countryName === 'Nepal' ? `District: ${district}` : ''}
+        Street Address: ${streetAddress}
+        City: ${city}
+        State/Province: ${stateProvince}
+        Postal/Zip Code: ${postalZipCode}
+
+        Message:
+        ${message}
+      `;
+      subject = `New Partner Form Submission from ${companyName}`;
+      break;
+
+    case 'job':
+      const { fullName, email, skills, country, cvLink } = req.body;
+
+      emailBody = `
+        A new job application has been submitted:
+
+        Full Name: ${fullName}
+        Email: ${email}
+        Skills: ${skills}
+        Country: ${country}
+        CV: ${cvLink}
+      `;
+      subject = `Job Application from ${fullName}`;
+      break;
+
+    case 'grievance':
+      const {
+        modeOfTransfer,
+        Name,
+        grievanceStreetAddress,
+        emailAddress,
+        phone,
+        agentName,
+        icn,
+        grievanceMessage,
+        date,
+        amount,
+      } = req.body;
+
+      emailBody = `
+        A grievance has been submitted:
+
+        Mode of Transfer: ${modeOfTransfer}
+        Name: ${Name}
+        Address: ${grievanceStreetAddress}
+        Email: ${emailAddress}
+        Phone: ${phone}
+        Agent Name: ${agentName}
+        ICN: ${icn}
+        Date:${date}
+        Amount:${amount}
+
+        Message:
+        ${grievanceMessage}
+      `;
+      subject = `Grievance Submission from ${Name}`;
+      break;
+
+    case 'agent':
+      const {
+        AgentcompanyName,
+        AgentcompanyAddress,
+        authorizedPerson,
+        contactPerson,
+        contactNumber,
+      } = req.body;
+
+      emailBody = `
+        An Agent has been submitted:
+
+        Company Name: ${AgentcompanyName}
+        Company Address: ${AgentcompanyAddress}
+        Authorized Person: ${authorizedPerson}
+        Contact Person: ${contactPerson}
+        Contact Number: ${contactNumber}
+      `;
+      subject = `Agent Submission from ${AgentcompanyName}`;
+      break;
+
+    default:
+      return res.status(400).json({ error: 'Invalid form type' });
+  }
+
+  const mailOptions = {
+    to: process.env.RECIEVED_EMAIL,
+    subject,
+    text: emailBody,
+  };
+
+    transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
-        res.status(500).json({ error: 'Failed to send email' });
+
       } else {
-        console.log('Email sent:', info.response);
-        res.status(200).json({ message: 'Email sent successfully!' });
+        console.log( info.response);
+          res.status(200).json({ message: 'emails sent successfully!' });
+
       }
     });
-  });
-  
-// Start the Server
+});
+
+
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
