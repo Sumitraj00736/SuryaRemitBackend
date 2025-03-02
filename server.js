@@ -11,7 +11,7 @@ const PORT = 5002;
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://suryaremit.com",
+    origin: "http://localhost:5174",
     methods: ["POST"],
     allowedHeaders: ["Content-Type"],
   })
@@ -38,9 +38,27 @@ const transporter = nodemailer.createTransport({
 
 // ✅ 3. Job Application Route with CV Upload
 app.post("/send-email", upload.single("cv"), async (req, res) => {
+  console.log("Received Request:", req.body);
+  console.log("Received File:", req.file);
   try {
-    const formType = req.body.formType;
 
+    const formType = req.body.formType; 
+      if (!req.body.formType) {
+        console.error("🚨 Missing formType");
+        return res.status(400).json({ error: "Missing formType" });
+      }
+  
+      if (req.body.formType === "job") {
+        if (!req.file) {
+          console.error("🚨 Missing CV file");
+          return res.status(400).json({ error: "CV file is required" });
+        }
+        if (req.file.mimetype !== "application/pdf") {
+          console.error("🚨 Invalid file type:", req.file.mimetype);
+          return res.status(400).json({ error: "Only PDF files are allowed" });
+        }
+      }
+    
     let emailBody = "";
     let subject = "";
 
@@ -58,7 +76,7 @@ app.post("/send-email", upload.single("cv"), async (req, res) => {
               resource_type: "raw",
               folder: "cv_uploads",
               format: "pdf",
-              access_mode: "public", // Ensure the file is publicly accessible
+              access_mode: "public", 
             },
             async (error, uploadResult) => {
               if (error) {
@@ -95,7 +113,7 @@ app.post("/send-email", upload.single("cv"), async (req, res) => {
                 console.log("Email sent:", info.response);
               });
       
-              res.status(200).json({ message: "CV uploaded successfully!", cvLink });
+              res.status(200).json({ message: "Application submitted successfully!", cvLink });
             }
           ).end(req.file.buffer);
         } catch (error) {
