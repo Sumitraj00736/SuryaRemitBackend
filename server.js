@@ -11,7 +11,7 @@ const PORT = 5002;
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5174",
+    origin: "https://www.suryaremit.com",
     methods: ["POST"],
     allowedHeaders: ["Content-Type"],
   })
